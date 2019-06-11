@@ -3,7 +3,13 @@ import sys
 import json
 import configargparse
 from shutil import copy
-sys.path.append('/home/dc-pede1/Codes/MP-Gadget-Master/tools/')
+# figure out path to MP-Gadget
+if 'MP_GADGET_DIR' in os.environ:
+    mp_gadget_dir=os.environ['MP_GADGET_DIR']
+else:
+    mp_gadget_dir='/home/dc-pede1/Codes/MP-Gadget-Stable/'
+print('mp gadget dir',mp_gadget_dir)
+sys.path.append(mp_gadget_dir+'/tools/')
 import make_class_power
 import write_submit_simulation_dirac as wsd
 
@@ -43,9 +49,13 @@ if verbose:
 nsamples=cube_data['nsamples']
 
 # directory to LyaCosmoParams repo
-lya_repo='/home/dc-font1/Codes/LyaCosmoParams/'
+if 'LYA_EMU_REPO' in os.environ:
+    lya_emu_repo=os.environ['LYA_EMU_REPO']
+else:
+    lya_emu_repo='/home/dc-font1/Codes/LyaCosmoParams/'
+
 # get TREECOOL file 
-treecool_file=lya_repo+'/setup_simulations/test_sim/TREECOOL_P18.txt'
+treecool_file=lya_emu_repo+'/setup_simulations/test_sim/TREECOOL_P18.txt'
 
 # for each sample, run make_class_power and copy the files to the right path
 for sample in range(nsamples):
@@ -64,11 +74,11 @@ for sample in range(nsamples):
 
     # write submission script to both simulations
     plus_submit=plus_dir+'/simulation.sub'
-    wsd.write_simulation_script(script_name=plus_submit,
-                    simdir=plus_dir,nodes=nodes,time=time)
+    wsd.write_simulation_script(script_name=plus_submit,simdir=plus_dir,
+                          nodes=nodes,time=time,mp_gadget_dir=mp_gadget_dir)
     minus_submit=minus_dir+'/simulation.sub'
-    wsd.write_simulation_script(script_name=minus_submit,
-                    simdir=minus_dir,nodes=nodes,time=time)
+    wsd.write_simulation_script(script_name=minus_submit,simdir=minus_dir,
+                          nodes=nodes,time=time,mp_gadget_dir=mp_gadget_dir)
 
     # run make_class_power to generate matterpow.dat and transfer.dat
     try:

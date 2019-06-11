@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_submit_string(simdir,nodes,time,root_output):
+def get_submit_string(simdir,nodes,time,root_output,mp_gadget_dir):
     submit_string='''#!/bin/bash
 #! Example SLURM job script for Peta4-Skylake (Skylake CPUs, OPA)
 #! sbatch directives begin here ###############################
@@ -25,8 +25,7 @@ module load rhel7/default-peta4            # REQUIRED - loads the basic environm
 module load gsl/2.4
 
 ## Gen ICs
-application="/home/dc-pede1/Codes/MP-Gadget-Stable/genic/MP-GenIC"
-#application="/home/dc-font1/Codes/MP-Gadget/genic/MP-GenIC"
+application=%s/genic/MP-GenIC"
 options=%s/paramfile.genic
 
 workdir="$SLURM_SUBMIT_DIR"  # The value of SLURM_SUBMIT_DIR sets workdir to the directory
@@ -64,8 +63,7 @@ echo -e "\nExecuting command:\n==================\n$CMD\n"
 eval $CMD
 
 ## Now run sim
-application="/home/dc-pede1/Codes/MP-Gadget-Stable/gadget/MP-Gadget"
-#application="/home/dc-font1/Codes/MP-Gadget/gadget/MP-Gadget"
+application=%s/gadget/MP-Gadget"
 options=%s/paramfile.gadget
 
 workdir="$SLURM_SUBMIT_DIR"  # The value of SLURM_SUBMIT_DIR sets workdir to the directory
@@ -83,15 +81,16 @@ echo -e "\nnumtasks=$numtasks, numnodes=$numnodes, mpi_tasks_per_node=$mpi_tasks
 echo -e "\nExecuting command:\n==================\n$CMD\n"
 
 eval $CMD 
-'''%(simdir,root_output,simdir,root_output,nodes,32*nodes,time,simdir,simdir)
+'''%(simdir,root_output,simdir,root_output,nodes,32*nodes,time,
+                  mp_gadget_dir,simdir,mp_gadget_dir,simdir)
     return submit_string
     
 
 def write_simulation_script(script_name,simdir,nodes,time,
-                root_output='slurm_simulation'):
+                  mp_gadget_dir,root_output='slurm_simulation'):
     """ Generate a SLURM file to run both GenIC and MP-Gadget for a sim."""
 
-    submit_string=get_submit_string(simdir,nodes,time,root_output)
+    submit_string=get_submit_string(simdir,nodes,time,root_output,mp_gadget_dir)
 
     submit_script = open(script_name,'w')
     for line in submit_string:
