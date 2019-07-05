@@ -36,6 +36,8 @@ class GPEmulator:
         else:
         	self.paramList=paramList
 
+        self._build_interp(self.arxiv,self.paramList)
+
         if train:
             if verbose: print('will train GP emulator')
             self.train()
@@ -84,10 +86,7 @@ class GPEmulator:
         kernel = GPy.kern.Linear(len(paramList))
         kernel += GPy.kern.RBF(len(paramList))
 
-        print("Training GP on %d points" % len(self.arxiv.data))
-        self.gp = GPy.models.GPRegression(params,normspectra,kernel=kernel, noise_var=1e-10)
-        status = self.gp.optimize(messages=False) #True
-        print("Optimised")
+        self.gp = GPy.models.GPRegression(params,normspectra,kernel=kernel, noise_var=1e-10,initialize=False)
 
     def _get_param_limits(self,paramGrid):
         paramLimits=np.empty((np.shape(paramGrid)[1],2))
@@ -97,11 +96,34 @@ class GPEmulator:
         return paramLimits
 
     def saveEmulator(self,saveName):
-        pickle.dump(self.gp,open(saveName+".p", "wb" ))
-        print("GP emulator object saved as:" + saveName + ".p")
+        ## Now need to save in the same location as basedir
+        ## alongside a json dictionary with the initialisation params
+        ## One option would to be to only save emulators on full
+        ## archives to avoid having random training points missed
+        saveString=self.basedir+saveName
+        saveDict={}
+        saveDict["paramList"]=self.paramList
+        saveDict["kmax_Mpc"]=self.kmax_Mpc
+        saveDict[""]
+        np.save('%s.npy' % saveString, self.gp.param_array)
+        print("Model saved as %s.npy" % saveString)
+
+    def loadEmulator(self,loadName):
+        ## To load the emulator we will need to
+        ## rebuild the param grids and X & Y input data
+        ## the only difference is the emulator object is
+        ## initialised using GPy.models
+        self.gp.update_model(False)
+        self.gp.initialize_parameter()
+        self.gp[:]=np.load(loadName+".npy")
+        self.gp.update_model(True)
+        print("Emulator loaded from %s.npy" % loadName)
 
     def train(self):
-        self._build_interp(self.arxiv,self.paramList)
+        self.gp.initialize_parameter()
+        print("Training GP on %d points" % len(self.arxiv.data))
+        status = self.gp.optimize(messages=False)
+        print("Optimised")
 
     def crossValidation(self,testSample=0.25,plotIndividual=False):
         paramList=self.paramList
