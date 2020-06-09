@@ -100,6 +100,18 @@ class Likelihood(object):
         return
 
 
+    def get_parameter_by_name(self,parname):
+        """Return likelihood parameter that matches name (if exists)"""
+
+        # loop over all parameters in theory, and return match if found
+        for par in self.theory.get_parameters():
+            if par.name is parname:
+                return par
+
+        # if no match is found, return None
+        return None
+
+
     def set_free_parameters(self,free_parameter_names,free_param_limits):
         """Setup likelihood parameters that we want to vary"""
 
