@@ -4,19 +4,11 @@
 \usepackage{geometry, amsmath, amsthm, latexsym, amssymb, graphicx,wasysym}
 \usepackage[dvipsnames]{xcolor}
 \geometry{margin=1in, headsep=0.25in}
-%\usepackage[usenames, dvipsnames]{color}
 
 % define units, short-names...
 \input{mydefinitions}
-%comments by co-authors (I like better these than those in mydefinitions)
-%(italics was probably inherited from Jordi from black and white printer 
-%days...)
 \newcommand{\afr}[1]{{\color{red}AFR: #1}}
 \newcommand{\as}[1]{{\color{blue}AS: #1}}
-%I wonder what I did to deserve ``olive"... I guess it is ok now that I'm 
-%getting used to it... 
-%What do you mean? I love olive! I first tried "green", but it was too bright to read. 
-%They didn't have darkgreen, so I went for olive :-)
 \newcommand{\pvm}[1]{{\color{olive}PVM: #1}}
 
 %Silence comments
@@ -28,6 +20,7 @@
 \newcommand{\pvmhid}[1]{{\color{olive}PVM: #1}}
 \newcommand{\CP}[1]{{\color{red}CP: #1}}
 \newcommand{\fluxpower}{$P_\mathrm{1D}(k_\parallel)$}
+\newcommand\LCDM{$\Lambda$CDM}
 
 \def\todo#1{[TO DO: {\it #1}] }
 
@@ -76,7 +69,23 @@ So we instead parameterise our emulator directly on the linear power, using a se
 parameters that are more orthogonal to one another and closer to the data which should
 result in more reliable predictions, and more robust constraints.
 
+\afr{In my opinion, there are two different discussions that we should not mix:
+\begin{itemize}
+ \item (A) Why the emulator works with linear power parameters instead of working with cosmological parameters.
+ \item (B) Why do we want to present a marginalised likelihood in terms of linear power parameters (in velocity units).
+ \end{itemize}
+There are different motivations for (A), but I think the most important one is that this allows us to run cosmological analyses in non-\LCDM\ models, even if the emulator was constructed using only \LCDM\ simulations. I'm thinking of the usual extensions that people discuss, like open curvature, non-zero neutrino masses, $w$CDM models, and so on. 
+It would be really hard to train an emulator that had all these parameters as labels.
+For (B), the motivation is so that we can provide a light-weight and fast likelihood module that
+others can use.
+However, it is important to differentiate (A) from (B), since if we didn't want to provide any
+marginalised / compressed likelihood, we would still want the emulator to work with linear
+power parameters.}
+
+
+
 \section{Emulator parameter space}
+
 We have opted to train our emulator to predict a \fluxpower\ as
 a function of the linear matter power spectrum, which we have parametrised in
 terms of an amplitude and a slope around a small scale pivot:
@@ -85,6 +94,8 @@ terms of an amplitude and a slope around a small scale pivot:
     \label{eq:Delta2_p}
     \Delta^2_p(z)=k^3P(k, z)|_{k=k_\star}
 \end{equation}
+
+\afr{Minor point, but there are $2 \pi$ factors in the definition of $\Delta$}
 
 \begin{equation}
     \label{eq:n_p}
@@ -132,7 +143,10 @@ in velocity units, which we parameterise as:
 \end{equation}
 
 where $q$ refers to a wavenumber in velocity units, and we set a pivot
-redshift of $z_\star=3$ and $q_\star=0.009$ s/km. We note here that using
+redshift of $z_\star=3$ and $q_\star=0.009$ s/km. 
+\afr{It might be useful to highlight that this pivot point does not need to match the pivot point
+in the emulator.}
+We note here that using
 only these two parameters we are fixing the growth rate and expansion
 history to a fiducial model. A given likelihood evaluation will make $N$ emulator
 calls, where $N$ is the number of redshfits where we have observational data, and
@@ -149,14 +163,19 @@ chain we find the emulator parameters without making any approximations. The exa
 expansion history is also used for the conversion of the emulated \fluxpower\ from
 comoving to velocity units, using the factor of $H(z)/1+z$.
 
+\afr{I would discuss this full likelihood first, in a separate section, and only when the full likelihood is very clear I would introduced the compressed likelihood.}
+
 \begin{figure}[ht]
     \begin{center}
      \includegraphics[scale=0.2]{Figures/Parameter_mapping.png}
     \end{center}
     \caption{Procedure for evaluating a \lyaf\ likelihood for a given
-    point in the Planck chain using the full emulator. For each cosmological
+    point in the Planck chain using the full emulator. 
+    \afr{Why "full" emulator?}
+    For each cosmological
     model, a \textsc{CAMB} object is created, and the emulator parameters defined
-    in equations \ref{eq:Delta2_p} and \ref{eq:n_p} are calculated. The $H(z)$ calculated
+    in equations \ref{eq:Delta2_p} and \ref{eq:n_p} are calculated, for each redshift $z$.
+    The $H(z)$ calculated
     for each model is then used to convert the comoving emulated \fluxpower\
     to velocity units, and a log likelihood is calculated.}
     \label{fig:param_map1}
@@ -175,7 +194,7 @@ is contained within the compressed parameters.
      \includegraphics[scale=0.2]{Figures/Compressed_test.png}
     \end{center}
     \caption{Here we evaluate each \lyaf\ likelihood contribution going
-    through the compressed likelihood parameters. Intsead of calculating
+    through the compressed likelihood parameters. Instead of calculating
     the emulator calls directly from the cosmological model, the compressed
     likelihood parameters are calculated first, and these are then used to
     find the emulator parameters. A fiducial expansion rate is then used for
