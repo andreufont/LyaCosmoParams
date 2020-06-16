@@ -61,10 +61,14 @@ one another\cite{Pedersen2020}. The effects of changing these parameters on the 
 often degenerate with changes to the intergalactic medium (IGM). In this redshift
 range, the universe is also very close to Einstein de-Sitter, so the dependence of the
 growth factor and the expansion rate are close to indepenent of cosmological model.
-Previous studies have put constraints on parameters such as $H_0$, $\Sigma_\nu$,
-$\Omega_m$ directly from \lyaf\ data\cite{Yeche2017},
-however these constraints are achieved
-through the effect of these parameters on the small scale matter power spectrum.
+Previous studies have interpolated the \fluxpower\ as a function of parameters
+such as $H_0$, $\Sigma_\nu$, $\Omega_m$\cite{Yeche2017},
+however the effect of changing these
+parameters on the \fluxpower\ occurs through changing the matter clustering
+as described by the power spectrum, and changing the IGM.
+Given that ultimately one would want to marginalise over the IGM,
+training the emulator on these highly degenerate parameters is not
+optimal.
 So we instead parameterise our emulator directly on the linear power, using a set of
 parameters that are more orthogonal to one another and closer to the data which should
 result in more reliable predictions, and more robust constraints.
@@ -117,10 +121,10 @@ scale $k_\star=0.69 \iMpc$. We also use $4$ nuisance parameters
 to describe the IGM:
 
 \begin{itemize}
-    \item $\langle F \rangle$, the mean flux
-    \item $\sigma_T$, the temperature at mean density of the IGM
-    \item $\gamma$, quantifying how the temperature scales with density
-    \item $k_F$, the pressure smoothing scale
+    \item $\langle F \rangle$, the mean flux,
+    \item $\sigma_T$, the temperature at mean density of the IGM,
+    \item $\gamma$, quantifying how the temperature scales with density,
+    \item $k_F$, the pressure smoothing scale.
 \end{itemize}
 
 We train one Gaussian
@@ -141,9 +145,8 @@ is the number of data redshift bins. The emulated \fluxpower\ is then converted
 into velocity units using the factor $H(z)/1+z$ calculated from
 the \textsc{CAMB} model. The log likelihood for this given model is then calculated
 from the data. NB that for brevity we do not discuss the details of modelling or
-marginalisation of the IGM in this document, let's for now assume that the log
-likelihood presented at the end of this flow diagram is after marginalisation
-over the nuisance parameters.
+marginalisation of the IGM in this document, for now let's imagine that the last
+step in this process would involve some marginalisation procedure.
 
 \begin{figure}[ht]
     \begin{center}
@@ -168,7 +171,7 @@ The approach shown in Fig \ref{fig:param_map1} requires the user to run the emul
 code and marginalise over the IGM. This requires expertise and is computationally slow,
 and so while this is appropriate for our first tests of the emulator, it is worthwhile to
 consider more practical ways which would allow a wider set of users to be able to
-incorporate results \lyaf\ results in their constraints. We propose to follow
+incorporate \lyaf\ results in their constraints. We propose to follow
 the approach presented in \cite{McDonald2005a}, and parameterise our likelihood
 in terms of the small scale linear power in velocity units:
 
@@ -191,9 +194,9 @@ pivot point in the emulator.}
 We note here that when using
 only these two parameters we are fixing the growth rate and expansion
 history to a fiducial model. One could then present marginalised likelihoods for
-the parameters, which could be included in packages like \textsc{MontePython}
+these parameters, which could be included in packages like \textsc{MontePython}
 and \textsc{CosmoMC}. In this case the \lyaf\ contribution to a joint likelihood
-would be calculated using the procedure shown in Fig \ref{fig:marginalised_compressed}.
+would be found using the procedure shown in Fig \ref{fig:marginalised_compressed}.
 Here for a given cosmological model, the compressed likelihood parameters are calculated,
 and the \lyaf\ likelihood for this model is looked up in some form of table.
 
