@@ -12,8 +12,8 @@
 \newcommand{\pvm}[1]{{\color{olive}PVM: #1}}
 
 %Silence comments
-%\def\afrhid#1{}
-\newcommand{\afrhid}[1]{{\color{red}AFR: #1}}
+\def\afrhid#1{}
+%\newcommand{\afrhid}[1]{{\color{red}AFR: #1}}
 %\def\ashid#1{}
 \newcommand{\ashid}[1]{{\color{blue}AS: #1}}
 %\def\pvmhid#1{}
@@ -69,7 +69,17 @@ So we instead parameterise our emulator directly on the linear power, using a se
 parameters that are more orthogonal to one another and closer to the data which should
 result in more reliable predictions, and more robust constraints.
 
-\afr{In my opinion, there are two different discussions that we should not mix:
+In addition to using a reduced and more orthogonal set of parameters, this approach also
+provides a model-independent emulator that can be used in joint constraints of
+extended models, such as curvature, non-standard $N_\mathrm{eff}$, and time-varying
+dark energy without these models needing to be included in the original emulator.
+First in section \ref{sec:emu_space} we cover the emulator parameter space in closer
+detail, and describe how our emulator can be combined with analysis of the CMB.
+Then in section \ref{sec:compressed} we discuss ways to simplify this procedure
+so that users do not need to run the emulator code and marginalise over the IGM
+in order to use \lyaf\ results.
+
+\afrhid{In my opinion, there are two different discussions that we should not mix:
 \begin{itemize}
  \item (A) Why the emulator works with linear power parameters instead of working with cosmological parameters.
  \item (B) Why do we want to present a marginalised likelihood in terms of linear power parameters (in velocity units).
@@ -85,17 +95,17 @@ power parameters.}
 
 
 \section{Emulator parameter space}
-
+\label{sec:emu_space}
 We have opted to train our emulator to predict a \fluxpower\ as
 a function of the linear matter power spectrum, which we have parametrised in
 terms of an amplitude and a slope around a small scale pivot:
 
 \begin{equation}
     \label{eq:Delta2_p}
-    \Delta^2_p(z)=k^3P(k, z)|_{k=k_\star}
+    \Delta^2_p(z)=k^3P(k, z)/2\pi^2|_{k=k_\star}
 \end{equation}
 
-\afr{Minor point, but there are $2 \pi$ factors in the definition of $\Delta$}
+%\afr{Minor point, but there are $2 \pi$ factors in the definition of $\Delta$}
 
 \begin{equation}
     \label{eq:n_p}
@@ -123,55 +133,24 @@ does not need to match the redshift binning of future or past surveys.
 Training simulations with different snapshot outputs can also in principle be combined
 to form bolstered training sets.
 
-\section{Compressed likelihood parameters}
-Given that the \lyaf\ is observed in velocity units, and there are several different
-redshifts at which we have data we will not constrain the emulator parameters directly,
-and there is flexibility in how to parameterise our likelihood. Since we believe that
-after marginalising over the IGM, the \lyaf\ is primarily sensitive to the linear
-matter power spectrum, we follow the approach presented in \cite{McDonald2005a}
-and intend to constrain the amplitude and slope of the linear matter power spectrum
-in velocity units, which we parameterise as:
-
-\begin{equation}
-    \label{eq:Delta2_star}
-    \Delta^2_\star=q^3P(q, z)|_{q=q_\star,z=z_\star}
-\end{equation}
-
-\begin{equation}
-    \label{eq:n_star}
-    n_\star=d\rm{ln}P(q,z) / d \rm{ln}(k)|_{q=q_\star,z=z_\star}
-\end{equation}
-
-where $q$ refers to a wavenumber in velocity units, and we set a pivot
-redshift of $z_\star=3$ and $q_\star=0.009$ s/km. 
-\afr{It might be useful to highlight that this pivot point does not need to match the pivot point
-in the emulator.}
-We note here that using
-only these two parameters we are fixing the growth rate and expansion
-history to a fiducial model. A given likelihood evaluation will make $N$ emulator
-calls, where $N$ is the number of redshfits where we have observational data, and
-in the simplest case we are first proposing the redshfit evolution of the amplitude
-of the linear power, $\Delta^2_p(z)$, is fixed.
-Further tests and extensions to these
-parameters will be discussed in section \ref{ss:extensions}. First we
-propose how to demonstrate that all the cosmologically relevant information
-in the \lyaf\ is contained within these compressed parameters. We are ultimately
-interested in how to combine \lyaf\ results with observations of the CMB, and the
-first approach to do this is shown in Fig \ref{fig:param_map1}. Here we do not use
-the compressed likelihood parameters, and for a given cosmological model in the Planck
-chain we find the emulator parameters without making any approximations. The exact
-expansion history is also used for the conversion of the emulated \fluxpower\ from
-comoving to velocity units, using the factor of $H(z)/1+z$.
-
-\afr{I would discuss this full likelihood first, in a separate section, and only when the full likelihood is very clear I would introduced the compressed likelihood.}
+In Fig \ref{fig:param_map1} we show how our emulator could be combined with
+CMB likelihoods. At each cosmological model in the Planck chain, a \textsc{CAMB}
+object is used to calculate the emulator parameters $\Delta^2_p(z)$ and $n_p(z)$
+at each redshift where we have data. This results in $N$ emulator calls, where $N$
+is the number of data redshift bins. The emulated \fluxpower\ is then converted
+into velocity units using the factor $H(z)/1+z$ calculated from
+the \textsc{CAMB} model. The log likelihood for this given model is then calculated
+from the data. NB that for brevity we do not discuss the details of modelling or
+marginalisation of the IGM in this document, let's for now assume that the log
+likelihood presented at the end of this flow diagram is after marginalisation
+over the nuisance parameters.
 
 \begin{figure}[ht]
     \begin{center}
      \includegraphics[scale=0.2]{Figures/Parameter_mapping.png}
     \end{center}
     \caption{Procedure for evaluating a \lyaf\ likelihood for a given
-    point in the Planck chain using the full emulator. 
-    \afr{Why "full" emulator?}
+    point in the Planck chain.
     For each cosmological
     model, a \textsc{CAMB} object is created, and the emulator parameters defined
     in equations \ref{eq:Delta2_p} and \ref{eq:n_p} are calculated, for each redshift $z$.
@@ -181,13 +160,64 @@ comoving to velocity units, using the factor of $H(z)/1+z$.
     \label{fig:param_map1}
 \end{figure}
 
-In Fig \ref{fig:param_map2}, we show an alternative approach, where the compressed
-parameters are calculated for each point in the Planck chain, which are then used
-to make the emulator calls, and a fiducial $H(z)$ is used for the conversion to
-velocity units. If we can show that the effect on the posteriors of adding the \lyaf\
-contributions to the likelihoods is the same whether we follow either of these
-approaches, we believe that this demonstrates that all of the necessary information
-is contained within the compressed parameters.
+
+
+\section{Compressed likelihood parameters}
+\label{sec:compressed}
+The approach shown in Fig \ref{fig:param_map1} requires the user to run the emulator
+code and marginalise over the IGM. This requires expertise and is computationally slow,
+and so while this is appropriate for our first tests of the emulator, it is worthwhile to
+consider more practical ways which would allow a wider set of users to be able to
+incorporate results \lyaf\ results in their constraints. We propose to follow
+the approach presented in \cite{McDonald2005a}, and parameterise our likelihood
+in terms of the small scale linear power in velocity units:
+
+\begin{equation}
+    \label{eq:Delta2_star}
+    \Delta^2_\star=q^3P(q, z)/2\pi^2|_{q=q_\star,z=z_\star}
+\end{equation}
+
+\begin{equation}
+    \label{eq:n_star}
+    n_\star=d\rm{ln}P(q,z) / d \rm{ln}(k)|_{q=q_\star,z=z_\star}
+\end{equation}
+
+where $q$ refers to a wavenumber in velocity units, and we set a pivot
+redshift of $z_\star=3$ and $q_\star=0.009$ s/km.\footnote{Note that this pivot
+scale can be chosen independently to $k_\star$ used in emulator parameter space.}
+We refer to these parameters as the compressed likelihood parameters.
+\afrhid{It might be useful to highlight that this pivot point does not need to match the
+pivot point in the emulator.}
+We note here that when using
+only these two parameters we are fixing the growth rate and expansion
+history to a fiducial model. One could then present marginalised likelihoods for
+the parameters, which could be included in packages like \textsc{MontePython}
+and \textsc{CosmoMC}. In this case the \lyaf\ contribution to a joint likelihood
+would be calculated using the procedure shown in Fig \ref{fig:marginalised_compressed}.
+Here for a given cosmological model, the compressed likelihood parameters are calculated,
+and the \lyaf\ likelihood for this model is looked up in some form of table.
+
+\begin{figure}[ht]
+    \begin{center}
+     \includegraphics[scale=0.2]{Figures/Marginalised_compressed.png}
+    \end{center}
+    \caption{Once we have calculated marginalised likelihoods for the compressed
+    likelihood parameters, the \lyaf\ likelihood for a given cosmological model
+    can simply be looked up.}
+    \label{fig:marginalised_compressed}
+\end{figure}
+
+It is important to demonstrate that there is no significant loss of information
+when compressing the information in the \lyaf\ down to the compressed likelihood
+parameters. The way we propose to show this is through the approach show in
+Fig \ref{fig:param_test}, which is very similar to the first procedure in Fig
+\ref{fig:param_map1}, except that the emulator calls are made having first gone
+through the compressed parameters. We intend to compare the combined CMB + \lyaf\
+posteriors when calculating the \lyaf\ likelihood using these two different approaches.
+If the posteriors are unchanged whether or not the compressed parameters are used,
+we will be able to conclude that all the cosmologically relevant information
+in the \lyaf\ is contained within the compressed parameters.
+
 
 \begin{figure}[ht]
     \begin{center}
@@ -197,58 +227,20 @@ is contained within the compressed parameters.
     through the compressed likelihood parameters. Instead of calculating
     the emulator calls directly from the cosmological model, the compressed
     likelihood parameters are calculated first, and these are then used to
-    find the emulator parameters. A fiducial expansion rate is then used for
+    find the emulator parameters. A fiducial expansion history is then used for
     the conversion of the emulated \fluxpower\ to velocity units.}
-    \label{fig:param_map2}
+    \label{fig:param_test}
 \end{figure}
 
-Once we have demonstrated this, studies of the \lyaf\ could be combined with other
-probes using the approach in Fig \ref{fig:param_map3}. The expert users of the emulator
-will calculate marginalised posteriors for the compressed likelihood parameters which
-can be included in packages such as \textsc{CosmoMC} and \textsc{MontePython}, from
-which point onwards it becomes trivial to combine the \lyaf\ with other probes.
-
-\begin{figure}[ht]
-    \begin{center}
-     \includegraphics[scale=0.2]{Figures/Marginalised_compressed.png}
-    \end{center}
-    \caption{Once we have demonstrated that there is no significant loss of
-    information when using the compressed likelihood parameters, \lyaf\ results
-    could be combined with other probes using this procedure.}
-    \label{fig:param_map3}
-\end{figure}
-
-\subsection{Adding flexibility to the growth rate and expansion history}
-\label{ss:extensions}
-In the previous approach we have kept fixed the expansion history and growth rate.
-There is a physical motivation for doing so, as these quantities are close to
-independent of cosmological model. However whether these approximations are appropriate
-for the most recent and future observations is an open question. In order to test this,
-we introduce to the compressed likelihood parameter space two parameters, which allow for
-some variation in the growth rate and expansion history respectively.
-
-\begin{equation}
-    f(z) = \frac{\partial \ln D(z)}{\partial \ln a(z)}
-     = - \frac{\partial \ln D(z)}{\partial \ln (1+z)}
-     = - \frac{1}{2} \frac{\partial \ln P(z,k)}{\partial \ln (1+z)} ~,
-\end{equation}
-
-\begin{equation}
-    g_\ast = \frac{2}{3} \frac{1+z_\ast}{H_\ast} 
-         \frac{\partial H(z)}{\partial z} \Bigr\rvert_{z_\ast} ~.
-\end{equation}
-
-To what extent we are sensitive to these parameters, and the effect that opening
-up some variation in them will have on our constraints on the linear power is
-something I am currently working on, and it is not year clear whether we will
-want to include them in the final set of marginalised compressed likelihood
-parameters.
-
-\CP{I'm tempted to leave definitions of these quantities out entirely.
-Defining them properly will require a fair bit of volume and could end
-up being distracting. Shall we leave a thorough definition of these
-quantities to a future document? I'm aware what I have right now
-isn't coherent and self contained}
+To what extent our approximations of a fixed fiducial expansion history and
+growth rate are valid is a question we are currently working on. There is a physical
+argument suggesting we are largely insensitive to these, however we do not know
+at what threshold the precision in the data and emulator will break this insensitivity.
+We are testing this by introducing some parameters that add freedom in these two
+dimensions, which we can go into more detail on in a future discussion.
+As a final note it is also trivial to add a running of the spectral index
+to the parameter spaces above, and it is worth discussing whether or not we
+want to include this in the first paper.
 
 \bibliography{main}
 \bibliographystyle{JHEP}

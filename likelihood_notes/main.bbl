@@ -1,0 +1,23 @@
+\providecommand{\href}[2]{#2}\begingroup\raggedright\begin{thebibliography}{1}
+
+\bibitem{McDonald2005a}
+P.~{McDonald}, U.~{Seljak}, R.~{Cen}, D.~{Shih}, D.~H. {Weinberg}, S.~{Burles},
+  D.~P. {Schneider}, D.~J. {Schlegel}, N.~A. {Bahcall}, J.~W. {Briggs},
+  J.~{Brinkmann}, M.~{Fukugita}, {\v Z}.~{Ivezi{\'c}}, S.~{Kent}, and D.~E.
+  {Vanden Berk}, {\it {The Linear Theory Power Spectrum from the Ly{$\alpha$}
+  Forest in the Sloan Digital Sky Survey}},  {\em \apj} {\bf 635} (Dec., 2005)
+  761--783.
+
+\bibitem{Pedersen2020}
+C.~Pedersen, A.~Font-Ribera, T.~D. Kitching, P.~McDonald, S.~Bird, A.~Slosar,
+  K.~K. Rogers, and A.~Pontzen, {\it Massive neutrinos and degeneracies in
+  lyman-alpha forest simulations},  {\em Journal of Cosmology and Astroparticle
+  Physics} {\bf 2020} (apr, 2020) 025--025.
+
+\bibitem{Yeche2017}
+C.~{Y{\`e}che}, N.~{Palanque-Delabrouille}, J.~{Baur}, and H.~{du Mas des
+  Bourboux}, {\it {Constraints on neutrino masses from Lyman-alpha forest power
+  spectrum with BOSS and XQ-100}},  {\em \jcap} {\bf 6} (June, 2017) 047,
+  [\href{http://xxx.lanl.gov/abs/1702.0331}{{\tt arXiv:1702.0331}}].
+
+\end{thebibliography}\endgroup
