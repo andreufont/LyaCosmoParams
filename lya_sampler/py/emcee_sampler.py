@@ -479,10 +479,6 @@ class EmceeSampler(object):
         saveDict["data_sim_number"]=self.like.data.sim_number
         saveDict["data_cov_factor"]=self.like.data.data_cov_factor
         saveDict["data_year"]=self.like.data.data_year
-        if self.like.simpleLike:
-            saveDict["simpleLike"]=True
-        else:
-            saveDict["simpleLike"]=False
         free_params_save=[]
         for par in self.like.free_params:
             free_params_save.append([par.name,par.min_value,par.max_value])
