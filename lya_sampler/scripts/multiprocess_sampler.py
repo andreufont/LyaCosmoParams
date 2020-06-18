@@ -55,6 +55,7 @@ parser.add_argument('--emu_cov_factor', type=float,help='Factor between 0 and 1 
 parser.add_argument('--emu_noise_var', type=float,help='Emulator noise variable')
 parser.add_argument('--parallel',action='store_true',help='Run sampler in parallel?')
 parser.add_argument('--data_cov_factor',type=float,help='Factor to multiply the data covariance by')
+parser.add_argument('--data_year', help='Which version of the data covmats and k binsto use, PD2013 or Chabanier2019')
 args = parser.parse_args()
 
 test_sim_number=args.test_sim_number
@@ -88,7 +89,8 @@ if prior==-1:
 data=data_MPGADGET.P1D_MPGADGET(sim_number=test_sim_number,
                                 basedir=args.basedir,
                                 skewers_label=args.skewers_label,
-                                data_cov_factor=args.data_cov_factor)
+                                data_cov_factor=args.data_cov_factor,
+                                covmat=args.data_year)
 zs=data.z
 
 ## Set up emulator training data
