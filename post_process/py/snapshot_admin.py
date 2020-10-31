@@ -37,7 +37,7 @@ class SnapshotAdmin(object):
     def get_all_flux_power(self,simdir=None):
         """Loop over all skewers, and return flux power for each"""
 
-        if simdir is not None:
+        if simdir is None:
             # get box size from GenIC file, to normalize power
             if 'simdir' in self.data:
                 simdir = self.data['simdir']
@@ -45,6 +45,7 @@ class SnapshotAdmin(object):
                 simdir = self.data['basedir']
 
         genic_file=simdir+'/paramfile.genic'
+        print(genic_file)
         L_Mpc=read_genic.L_Mpc_from_paramfile(genic_file,verbose=True)
 
         skewers_dir=simdir+"output/skewers/"
@@ -101,13 +102,16 @@ class SnapshotAdmin(object):
         return filename
 
 
-    def write_p1d_json(self,p1d_label='p1d'):
+    def write_p1d_json(self,p1d_label='p1d',simdir=None):
         """ Write JSON file with P1D measured in all post-processing"""
 
         if p1d_label is None:
             p1d_label='p1d'
 
-        filename=self.data['simdir']+'/'+self.get_p1d_json_filename(p1d_label)
+        if simdir is None:
+            simdir=self.data['simdir']
+
+        filename=simdir+'/'+self.get_p1d_json_filename(p1d_label)
         print('will print P1d to file',filename)
 
         # make sure we have already computed P1D
