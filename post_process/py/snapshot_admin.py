@@ -34,20 +34,20 @@ class SnapshotAdmin(object):
             self.scales_tau=[1.0]
 
 
-    def get_all_flux_power(self,simdir=None):
+    def get_all_flux_power(self,simdir=None,skewers_dir=None):
         """Loop over all skewers, and return flux power for each"""
 
-        if simdir is not None:
-            # get box size from GenIC file, to normalize power
-            if 'simdir' in self.data:
-                simdir = self.data['simdir']
-            elif 'basedir' in self.data:
-                simdir = self.data['basedir']
+        if simdir is None:
+            simdir = self.data['simdir']
 
+        if skewers_dir is None:
+            skewers_dir=self.data['skewers_dir']
+
+        # get box size from GenIC file, to normalize power
         genic_file=simdir+'/paramfile.genic'
         L_Mpc=read_genic.L_Mpc_from_paramfile(genic_file,verbose=True)
 
-        skewers_dir=simdir+"output/skewers/"
+        # get snapshot number from JSON data
         snap_num=self.data['snap_num']
 
         # will loop over all temperature models in snapshot
@@ -96,6 +96,10 @@ class SnapshotAdmin(object):
         
         filename=p1d_label+'_'+str(num)+'_Ns'+str(n_skewers)
         filename+='_wM'+str(int(1000*width_Mpc)/1000)
+
+        if 'axis' in self.data:
+            filename+='_axis'+str(self.data['axis'])
+
         filename+='.json'
 
         return filename
@@ -107,7 +111,8 @@ class SnapshotAdmin(object):
         if p1d_label is None:
             p1d_label='p1d'
 
-        filename=self.data['simdir']+'/'+self.get_p1d_json_filename(p1d_label)
+        filename=self.data['skewers_dir']+'/'+self.get_p1d_json_filename(p1d_label)
+
         print('will print P1d to file',filename)
 
         # make sure we have already computed P1D
