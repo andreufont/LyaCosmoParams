@@ -9,12 +9,14 @@ import read_gadget
 import camb_cosmo
 import thermal_model
 
-def get_skewers_filename(num,n_skewers,width_Mpc,scale_T0=None,
+def get_skewers_filename(num,n_skewers,width_Mpc,axis=None,scale_T0=None,
             scale_gamma=None):
     """Filename storing skewers for a particular temperature model"""
 
     filename='skewers_'+str(num)+'_Ns'+str(n_skewers)
     filename+='_wM'+str(int(1000*width_Mpc)/1000)
+    if axis is not None:
+        filename+='_axis'+str(axis)
     if scale_T0:
         filename+='_sT'+str(int(1000*scale_T0)/1000)
     if scale_gamma:
@@ -23,11 +25,13 @@ def get_skewers_filename(num,n_skewers,width_Mpc,scale_T0=None,
     return filename 
 
 
-def get_snapshot_json_filename(num,n_skewers,width_Mpc):
+def get_snapshot_json_filename(num,n_skewers,width_Mpc,axis=None):
     """Filename describing the set of skewers for a given snapshot"""
 
     filename='snap_skewers_'+str(num)+'_Ns'+str(n_skewers)
     filename+='_wM'+str(int(1000*width_Mpc)/1000)
+    if axis is not None:
+        filename+='_axis'+str(axis)
     filename+='.json'
     return filename 
 
@@ -55,8 +59,9 @@ def thermal_broadening_Mpc(T_0,dkms_dMpc):
     return sigma_T_Mpc
 
 
-def rescale_write_skewers_z(simdir,num,skewers_dir=None,n_skewers=50,
-            width_Mpc=0.1,scales_T0=None,scales_gamma=None):
+def rescale_write_skewers_z(simdir,num,skewers_dir=None,
+            n_skewers=50,width_Mpc=0.1,axis=None,
+            scales_T0=None,scales_gamma=None):
     """Extract skewers for a given snapshot, for different temperatures."""
 
     # don't rescale unless asked to
@@ -82,6 +87,8 @@ def rescale_write_skewers_z(simdir,num,skewers_dir=None,n_skewers=50,
                 'width_Mpc':width_Mpc, 'width_kms':width_kms,
                 'T0_ini':T0_ini, 'gamma_ini':gamma_ini,
                 'scales_T0':scales_T0, 'scales_gamma':scales_gamma}
+    if axis is not None:
+        sim_info['axis']=axis
 
     # will also store measured values
     sim_T0=[]
@@ -96,19 +103,20 @@ def rescale_write_skewers_z(simdir,num,skewers_dir=None,n_skewers=50,
         for scale_gamma in scales_gamma:
             T0=T0_ini*scale_T0
             gamma=gamma_ini*scale_gamma
-            sk_filename=get_skewers_filename(num,n_skewers,width_Mpc,
-                                    scale_T0,scale_gamma)
+            sk_filename=get_skewers_filename(num,n_skewers=n_skewers,
+                                    width_Mpc=width_Mpc,axis=axis,
+                                    scale_T0=scale_T0,scale_gamma=scale_gamma)
 
             # avoid (if possible) to use set_T0, might break fake_spectra
             if (scale_T0==1.0) and (scale_gamma==1.0):
                 skewers=get_skewers_snapshot(simdir,skewers_dir,num,
                             n_skewers=n_skewers,width_kms=width_kms,
-                            skewers_filename=sk_filename)
+                            axis=axis,skewers_filename=sk_filename)
             else:
                 skewers=get_skewers_snapshot(simdir,skewers_dir,num,
                             n_skewers=n_skewers,width_kms=width_kms,
                             set_T0=T0,set_gamma=gamma,
-                            skewers_filename=sk_filename)
+                            axis=axis,skewers_filename=sk_filename)
 
             # call mean flux, so that the skewers are really computed
             mf=skewers.get_mean_flux()
@@ -131,7 +139,7 @@ def rescale_write_skewers_z(simdir,num,skewers_dir=None,n_skewers=50,
     sim_info['sim_scale_gamma']=sim_scale_gamma
     sim_info['sk_files']=sk_files
 
-    snapshot_filename=get_snapshot_json_filename(num,n_skewers,width_Mpc)
+    snapshot_filename=get_snapshot_json_filename(num,n_skewers,width_Mpc,axis)
     sim_info['snapshot_filename']=snapshot_filename
     json_file = open(skewers_dir+'/'+snapshot_filename,"w")
     json.dump(sim_info,json_file)
@@ -143,33 +151,33 @@ def rescale_write_skewers_z(simdir,num,skewers_dir=None,n_skewers=50,
 
 
 def get_skewers_snapshot(simdir,skewers_dir,snap_num,n_skewers=50,width_kms=10,
-                set_T0=None,set_gamma=None,skewers_filename=None):
+                axis=None,set_T0=None,set_gamma=None,
+                skewers_filename='test_skewers.hdf5'):
     """Extract skewers for a particular snapshot"""
-
-    if not skewers_filename:
-        skewers_filename="skewers_"+str(snap_num)+"_"+str(n_skewers)
-        skewers_filename+="_"+str(width_kms)
-        if set_T0:
-            skewers_filename+='_T0_'+str(set_T0)
-        if set_gamma:
-            skewers_filename+='_gamma_'+str(set_gamma)
-        skewers_filename+='.hdf5'
 
     # check that spectra file does not exist yet (should crash)
     if os.path.exists(skewers_dir+'/'+skewers_filename):
         print(skewers_filename,'already exists in',skewers_dir)
 
-    # avoid (if possible) to use set_T0, not always present in fake_spectra
-    if (set_T0 is None) and (set_gamma is None):
+    # new functionality to specify simulation axis for skewers
+    if axis is not None:
+        # for now only working without temperature rescalings
+        assert (set_T0 is None) and (set_gamma is None), 'get_skewers_snapshot'
         skewers = grid_spec.GriddedSpectra(snap_num,simdir+'/output/',
-                nspec=n_skewers,res=width_kms,savefile=skewers_filename,
+                nspec=n_skewers,res=width_kms,axis=axis,
+                savefile=skewers_filename,
                 savedir=skewers_dir,reload_file=True)
     else:
-        skewers = grid_spec.GriddedSpectra(snap_num,simdir+'/output/',
-                nspec=n_skewers,res=width_kms,savefile=skewers_filename,
-                savedir=skewers_dir,reload_file=True,
-                set_T0=set_T0,set_gamma=set_gamma)
-
+        # avoid (if possible) to use set_T0, not always present in fake_spectra
+        if (set_T0 is None) and (set_gamma is None):
+            skewers = grid_spec.GriddedSpectra(snap_num,simdir+'/output/',
+                    nspec=n_skewers,res=width_kms,savefile=skewers_filename,
+                    savedir=skewers_dir,reload_file=True)
+        else:
+            skewers = grid_spec.GriddedSpectra(snap_num,simdir+'/output/',
+                    nspec=n_skewers,res=width_kms,savefile=skewers_filename,
+                    savedir=skewers_dir,reload_file=True,
+                    set_T0=set_T0,set_gamma=set_gamma)
 
     return skewers
 

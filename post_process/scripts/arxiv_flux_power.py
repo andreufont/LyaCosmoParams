@@ -14,9 +14,10 @@ import json
 parser = argparse.ArgumentParser()
 parser.add_argument('--simdir', type=str, help='Base simulation directory',required=True)
 parser.add_argument('--snap_num', type=int, help='Snapshop number',required=True)
-parser.add_argument('--skewers_dir', type=str, help='Store skewers in this folder',required=False)
+parser.add_argument('--skewers_dir', type=str, help='Store skewers in this folder',required=True)
 parser.add_argument('--n_skewers', type=int, default=10, help='Number of skewers per side',required=False)
 parser.add_argument('--width_Mpc', type=float, default=0.1, help='Cell width (in Mpc)',required=False)
+parser.add_argument('--axis', type=int, help='Axis to use to extract skewers (1,2,3)', required=False)
 parser.add_argument('--scales_tau', type=str, default='1.0', help='Comma-separated list of optical depth scalings to use.',required=False)
 parser.add_argument('--p1d_label', type=str, default=None, help='String identifying P1D measurement and / or tau scaling.',required=False)
 parser.add_argument('--verbose', action='store_true', help='Print runtime information',required=False)
@@ -25,19 +26,12 @@ args = parser.parse_args()
 verbose=args.verbose
 print('verbose =',verbose)
 
-# main simulation folder 
-simdir=args.simdir
-if args.skewers_dir:
-    skewers_dir=args.skewers_dir
-else:
-    skewers_dir=simdir+'/output/skewers/'
-
 scales_tau=[float(scale) for scale in args.scales_tau.split(',')]
 if verbose:
     print('will scale tau by',scales_tau)
 
 # try to read information about filtering length in simulation
-kF_json=simdir+'/filtering_length.json'
+kF_json=args.simdir+'/filtering_length.json'
 if os.path.isfile(kF_json):
     # read json file with filtering data
     with open(kF_json) as json_data:
@@ -48,9 +42,9 @@ else:
     kF_Mpc=None
 
 # read file containing information of all temperature rescalings in snapshot
-snap_filename=skewers_dir+'/'+extract_skewers.get_snapshot_json_filename(
+snap_filename=args.skewers_dir+'/'+extract_skewers.get_snapshot_json_filename(
                 num=args.snap_num,n_skewers=args.n_skewers,
-                width_Mpc=args.width_Mpc)
+                width_Mpc=args.width_Mpc,axis=args.axis)
 if verbose:
     print('setup snapshot admin from file',snap_filename)
 
